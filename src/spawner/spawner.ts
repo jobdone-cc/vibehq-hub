@@ -179,7 +179,15 @@ export class AgentSpawner {
             const normalizedKey = key.replace(/\\/g, '/').toLowerCase();
             if (normalizedKey === cwdForward.toLowerCase()) {
                 if (!config.projects[key].mcpServers) config.projects[key].mcpServers = {};
-                config.projects[key].mcpServers.team = teamServer;
+                config.projects[key].mcpServers[`team`] = teamServer;
+                // Also add permission for this agent's team tools
+                if (!config.projects[key].allowedTools) config.projects[key].allowedTools = [];
+                const toolPatterns = ['mcp__team__*'];
+                for (const p of toolPatterns) {
+                    if (!config.projects[key].allowedTools.includes(p)) {
+                        config.projects[key].allowedTools.push(p);
+                    }
+                }
                 found = true;
             }
         }
@@ -187,7 +195,7 @@ export class AgentSpawner {
         // If no matching project, create one with forward-slash path
         if (!found) {
             config.projects[cwdForward] = {
-                allowedTools: [],
+                allowedTools: ['mcp__team__*'],
                 mcpServers: { team: teamServer },
                 hasTrustDialogAccepted: true,
             };
