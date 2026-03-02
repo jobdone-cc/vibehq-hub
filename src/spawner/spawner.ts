@@ -51,6 +51,7 @@ export class AgentSpawner {
     private currentStatus: 'idle' | 'working' = 'idle';
     private ptyIdleTimer: ReturnType<typeof setTimeout> | null = null;
     private readonly PTY_IDLE_TIMEOUT = 10000; // 10s of PTY silence = idle
+    private initialPromptSent = false;
 
     constructor(options: SpawnerOptions) {
         this.options = options;
@@ -297,6 +298,13 @@ export class AgentSpawner {
             process.stdout.write(data);
             // Reset PTY idle timer on any output (for Codex/Gemini)
             this.resetPtyIdleTimer();
+            // Auto-inject initial prompt when CLI is ready
+            if (!this.initialPromptSent && this.options.systemPrompt && data.includes('❯')) {
+                this.initialPromptSent = true;
+                setTimeout(() => {
+                    this.ptyProcess?.write('Call list_teammates then greet your teammate to confirm the channel works.\n');
+                }, 1000);
+            }
         });
 
         this.ptyProcess.onExit(({ exitCode }) => {
